@@ -62,15 +62,17 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("a file named %q already exists at the destination", handler.Filename)
 		return
 	}
-	log.Printf("uploading file %v", handler.Header)
-	f, err := os.OpenFile(os.Getenv("DESTDIR")+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		http.Error(w, "failed to write file to destination", http.StatusInternalServerError)
-		log.Printf("failed to write file to destination: %v", err)
-		return
-	}
-	defer f.Close()
-	io.Copy(f, file)
+	go func() {
+		log.Printf("writing file %v", handler.Header)
+		f, err := os.OpenFile(os.Getenv("DESTDIR")+handler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			http.Error(w, "failed to write file to destination", http.StatusInternalServerError)
+			log.Printf("failed to write file to destination: %v", err)
+			return
+		}
+		defer f.Close()
+		io.Copy(f, file)
+	}()
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("File uploaded successfully at " + os.Getenv("BASEURL") + handler.Filename))
 }
