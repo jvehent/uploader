@@ -48,7 +48,12 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("parsing multipart form")
 	// no more than 100MB of memory, the rest goes into /tmp
-	r.ParseMultipartForm(100000000)
+	err := r.ParseMultipartForm(100000000)
+	if err != nil {
+		http.Error(w, "failed to parse multipart form", http.StatusBadRequest)
+		log.Printf("failed to parse multipart form: %v", err)
+		return
+	}
 	file, handler, err := r.FormFile("uploadfile")
 	if err != nil {
 		http.Error(w, "failed to read uploadfile form field", http.StatusBadRequest)
